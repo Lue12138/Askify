@@ -4,6 +4,7 @@ import "./App.css";
 
 function App() {
   const [url, setUrl] = useState("");
+  const [questionData, setQuestionData] = useState(null); // New state to store question and options
 
   const handleSubmit = async (event) => {
     event.preventDefault(); // Prevents the default form submission behavior
@@ -14,7 +15,7 @@ function App() {
       });
 
       console.log("Response from backend:", response.data);
-      // You can also set the response data to state and display it in the UI
+      setQuestionData(response.data); // Set the response data to state for display
     } catch (error) {
       console.error("Error:", error);
     }
@@ -32,6 +33,20 @@ function App() {
         />
         <button type="submit">Next</button>
       </form>
+
+      {/* Conditionally render question and options if available */}
+      {questionData && (
+        <div>
+          <h2>{questionData.question}</h2>
+          <ul>
+            {Object.entries(questionData.options).map(([key, option]) => (
+              <li key={key}>
+                {key}. {option}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
