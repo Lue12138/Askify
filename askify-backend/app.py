@@ -79,6 +79,18 @@ def classify():
     else:
         return jsonify({"error": "No URL provided"}), 400
 
+@app.route('/optionSelected', methods=['POST'])
+def option_selected():
+    data = request.get_json()
+    selected_option = data.get('selectedOption')
+
+    if selected_option:
+        print(f"User selected: {selected_option}")
+        # Process the selected option as needed
+        return jsonify({"status": "Option received"}), 200
+    else:
+        return jsonify({"error": "No option provided"}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)

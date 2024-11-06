@@ -4,7 +4,8 @@ import "./App.css";
 
 function App() {
   const [url, setUrl] = useState("");
-  const [questionData, setQuestionData] = useState(null); // New state to store question and options
+  const [questionData, setQuestionData] = useState(null); // State to store question and options
+  const [selectedOption, setSelectedOption] = useState(null); // State to store the selected option
 
   const handleSubmit = async (event) => {
     event.preventDefault(); // Prevents the default form submission behavior
@@ -16,6 +17,21 @@ function App() {
 
       console.log("Response from backend:", response.data);
       setQuestionData(response.data); // Set the response data to state for display
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleOptionClick = async (option) => {
+    setSelectedOption(option); // Update selected option in state
+    try {
+      // Send the selected option to the backend
+      const response = await axios.post("http://localhost:8000/optionSelected", {
+        selectedOption: option,
+      });
+
+      console.log("Option selection response:", response.data);
+      // Optionally, handle the response (e.g., show a confirmation message or further actions)
     } catch (error) {
       console.error("Error:", error);
     }
@@ -40,7 +56,7 @@ function App() {
           <h2>{questionData.question}</h2>
           <ul>
             {Object.entries(questionData.options).map(([key, option]) => (
-              <li key={key}>
+              <li key={key} onClick={() => handleOptionClick(option)} style={{ cursor: "pointer", color: selectedOption === option ? "blue" : "black" }}>
                 {key}. {option}
               </li>
             ))}
