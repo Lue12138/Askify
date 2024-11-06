@@ -5,10 +5,11 @@ import requests
 import openai
 import os
 from openai import OpenAI
+import json
+import re
 
 app = Flask(__name__)
 CORS(app)
-
 
 @app.route('/classify', methods=['POST', 'OPTIONS'])
 def classify():
@@ -30,10 +31,15 @@ def classify():
             with open("scrape_result.txt", "w", encoding="utf-8") as file:
                 file.write(scraped_content)
 
-            # step3: generate question
+            # Step 3: generate question
             openai.api_key = os.getenv("OPENAI_API_KEY")
             client = OpenAI()
-            m = [{"role": "system", "content": "Analyze the following content and generate a question with multiple-choice options based on key themes:\n\n"}]
+            m = [{"role": "system", "content": """
+            Analyze the following content and generate a question with THREE multiple-choice 
+            options based on key themes to help categorize users visiting the site.\n\n
+            You should use the following format:\n
+            Question: your question here\n
+            Options: A. option1 B. option2 C. option3"""}]
             dic = {}
             dic["role"] = "user"
             dic["content"] = scraped_content
@@ -42,10 +48,28 @@ def classify():
                 model="gpt-3.5-turbo",
                 messages=m
             )
-            print(response.choices[0].message.content.strip())
             generated_text = response.choices[0].message.content.strip()
-            return jsonify({"question_and_choices": generated_text,
-                            "received_url": url}), 200
+
+            # Step 4: Parse the response to separate question and options
+            parts = generated_text.split("Options:", 1)
+            question = parts[0].replace("Question:", "").strip()
+            options_text = parts[1].strip() if len(parts) > 1 else ""
+
+            # Extract options using regex to find each option pattern (e.g., "A. option1")
+            options = {}
+            matches = re.findall(r"([A-Z])\. (.*?)(?=[A-Z]\. |$)", options_text)
+            for letter, option_text in matches:
+                options[letter] = option_text.strip()
+
+            # Create the structured JSON object
+            parsed_data = {
+                "question": question,
+                "options": options
+            }
+            print(parsed_data)
+
+            # Step 5: Return as structured JSON
+            return jsonify(parsed_data), 200
 
         except requests.exceptions.RequestException as e:
             return jsonify({"error":
