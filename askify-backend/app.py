@@ -11,8 +11,8 @@ import re
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/classify', methods=['POST', 'OPTIONS'])
-def classify():
+@app.route('/scrape', methods=['POST', 'OPTIONS'])
+def scrape():
     if request.method == "OPTIONS":
         return jsonify({"status": "Preflight request successful"}), 200
 
@@ -28,7 +28,7 @@ def classify():
             scraped_content = soup.get_text()
 
             # Step 2: Save the scraped content to a file
-            with open("scrape_result.txt", "w", encoding="utf-8") as file:
+            with open("conversation.txt", "w", encoding="utf-8") as file:
                 file.write(scraped_content)
 
             # Step 3: generate question
