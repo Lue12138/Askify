@@ -9,6 +9,8 @@ function App() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [rating, setRating] = useState(null); // User's rating
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false); // Feedback submitted state
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -58,6 +60,28 @@ function App() {
     }
   };
 
+  const handleRatingSubmit = async (ratingValue) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/feedback",
+        {
+          rating: ratingValue,
+          conversationId: conversationId, // Include conversationId in request
+        }
+      );
+
+      console.log("Feedback response:", response.data);
+
+      setRating(ratingValue);
+      setFeedbackSubmitted(true);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="app-container">
       <h1 className="app-title">
@@ -65,7 +89,7 @@ function App() {
       </h1>
 
       {/* Display form only when not loading and no question or result is present */}
-      {!questionData && !finalResult && !isLoading && (
+      {!questionData && !finalResult && !isLoading && !feedbackSubmitted && (
         <form className="url-form" onSubmit={handleSubmit}>
           <input
             className="url-input"
@@ -109,10 +133,36 @@ function App() {
       )}
 
       {/* Display final result when available and not loading */}
-      {finalResult && !isLoading && (
+      {finalResult && !isLoading && !feedbackSubmitted && (
         <div className="result-container">
           <h2 className="result-title">Your Purpose:</h2>
           <p className="result-text">{finalResult}</p>
+        </div>
+      )}
+
+      {/* Display rating input when final result is shown */}
+      {finalResult && !isLoading && !feedbackSubmitted && (
+        <div className="feedback-container">
+          <h2 className="feedback-title">How accurate was the classification?</h2>
+          <p>Please rate from 1 (totally incorrect) to 5 (perfectly correct):</p>
+          <div className="rating-options">
+            {[1, 2, 3, 4, 5].map((num) => (
+              <button
+                key={num}
+                onClick={() => handleRatingSubmit(num)}
+                className="rating-button"
+              >
+                {num}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Display thank you message after feedback is submitted */}
+      {feedbackSubmitted && !isLoading && (
+        <div className="thank-you-container">
+          <h2>Thank you for your feedback!</h2>
           <button
             className="restart-button"
             onClick={() => {
@@ -121,6 +171,8 @@ function App() {
               setQuestionData(null);
               setSelectedOption(null);
               setFinalResult(null);
+              setRating(null);
+              setFeedbackSubmitted(false);
             }}
           >
             Restart

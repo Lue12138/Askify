@@ -13,7 +13,6 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
-# Ensure your OpenAI API key is set in your environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
 
@@ -73,7 +72,7 @@ def generate_user_purpose(conversation_content):
 def save_conversation_to_s3(content, conversation_id):
     try:
         s3_client = boto3.resource('s3')
-        bucket_name = 'askify-nov28'  # Replace with your actual bucket name
+        bucket_name = 'askify-nov28'
 
         s3_client.Bucket(bucket_name).put_object(Key=f"{conversation_id}.txt", Body=content)
 
@@ -174,16 +173,45 @@ def option_selected():
             # Generate user's purpose based on conversation
             user_purpose = generate_user_purpose(content)
 
-            # Save the conversation to AWS S3
-            save_conversation_to_s3(content, conversation_id)
-
-            # Delete the conversation file
-            os.remove(filename)
+            # Append user_purpose to conversation file
+            with open(filename, "a", encoding="utf-8") as file:
+                file.write("\nUser's Purpose: " + user_purpose + "\n")
 
             return jsonify({"finalResult": user_purpose, "conversationId": conversation_id}), 200
 
     else:
         return jsonify({"error": "No option or conversationId provided"}), 400
+
+@app.route('/feedback', methods=['POST'])
+def feedback():
+    data = request.get_json()
+    rating = data.get('rating')
+    conversation_id = data.get('conversationId')
+
+    if rating and conversation_id:
+        filename = f"conversation_{conversation_id}.txt"
+
+        if not os.path.exists(filename):
+            return jsonify({"error": "Conversation file not found"}), 400
+
+        # Append rating to conversation file
+        with open(filename, "a", encoding="utf-8") as file:
+            file.write("User's Rating: " + str(rating) + "\n")
+
+        # Read the conversation content
+        with open(filename, "r", encoding="utf-8") as file:
+            content = file.read()
+
+        # Save the conversation to AWS S3
+        save_conversation_to_s3(content, conversation_id)
+
+        # Delete the conversation file
+        os.remove(filename)
+
+        return jsonify({"message": "Feedback received and conversation saved."}), 200
+
+    else:
+        return jsonify({"error": "No rating or conversationId provided"}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
