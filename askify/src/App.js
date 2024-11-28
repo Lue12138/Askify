@@ -4,10 +4,11 @@ import "./App.css";
 
 function App() {
   const [url, setUrl] = useState("");
+  const [conversationId, setConversationId] = useState(null); // Store conversationId
   const [questionData, setQuestionData] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Added loading state
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -19,6 +20,7 @@ function App() {
 
       console.log("Response from backend:", response.data);
       setQuestionData(response.data);
+      setConversationId(response.data.conversationId); // Store conversationId from response
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -34,6 +36,7 @@ function App() {
         "http://localhost:8000/optionSelected",
         {
           selectedOption: option,
+          conversationId: conversationId, // Include conversationId in request
         }
       );
 
@@ -114,6 +117,7 @@ function App() {
             className="restart-button"
             onClick={() => {
               setUrl("");
+              setConversationId(null); // Reset conversationId
               setQuestionData(null);
               setSelectedOption(null);
               setFinalResult(null);

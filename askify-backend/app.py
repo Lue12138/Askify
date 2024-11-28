@@ -7,6 +7,8 @@ from openai import OpenAI
 import os
 import json
 import re
+import boto3
+import uuid
 
 app = Flask(__name__)
 CORS(app)
@@ -68,6 +70,16 @@ def generate_user_purpose(conversation_content):
     generated_text = response.choices[0].message.content.strip()
     return generated_text
 
+def save_conversation_to_s3(content, conversation_id):
+    try:
+        s3_client = boto3.resource('s3')
+        bucket_name = 'askify-nov28'  # Replace with your actual bucket name
+
+        s3_client.Bucket(bucket_name).put_object(Key=f"{conversation_id}.txt", Body=content)
+
+    except Exception as e:
+        print(f"Error saving conversation to S3: {e}")
+
 @app.route('/scrape', methods=['POST', 'OPTIONS'])
 def scrape():
     if request.method == "OPTIONS":
@@ -84,14 +96,18 @@ def scrape():
             soup = BeautifulSoup(response.text, 'html.parser')
             scraped_content = soup.get_text(separator=' ')
 
-            # Step 2: Save the scraped content to a file
-            with open("conversation.txt", "w", encoding="utf-8") as file:
+            # Step 2: Generate a conversation ID
+            conversation_id = str(uuid.uuid4())
+
+            # Step 3: Save the scraped content to a file
+            filename = f"conversation_{conversation_id}.txt"
+            with open(filename, "w", encoding="utf-8") as file:
                 file.write(scraped_content)
 
-            # Step 3: Generate question and append to conversation.txt
+            # Step 4: Generate question and append to conversation file
             question, options = generate_question(scraped_content)
 
-            with open("conversation.txt", "a", encoding="utf-8") as file:
+            with open(filename, "a", encoding="utf-8") as file:
                 file.write("\nQuestion: " + question + "\n")
                 for key, option in options.items():
                     file.write(f"{key}. {option}\n")
@@ -99,7 +115,8 @@ def scrape():
             # Prepare the response data
             parsed_data = {
                 "question": question,
-                "options": options
+                "options": options,
+                "conversationId": conversation_id
             }
 
             return jsonify(parsed_data), 200
@@ -116,16 +133,22 @@ def scrape():
 def option_selected():
     data = request.get_json()
     selected_option = data.get('selectedOption')
+    conversation_id = data.get('conversationId')
 
-    if selected_option:
+    if selected_option and conversation_id:
         print(f"User selected: {selected_option}")
 
-        # Append selected option to conversation.txt
-        with open("conversation.txt", "a", encoding="utf-8") as file:
+        filename = f"conversation_{conversation_id}.txt"
+
+        if not os.path.exists(filename):
+            return jsonify({"error": "Conversation file not found"}), 400
+
+        # Append selected option to conversation file
+        with open(filename, "a", encoding="utf-8") as file:
             file.write("Selected Option: " + selected_option + "\n")
 
         # Check the number of questions asked so far
-        with open("conversation.txt", "r", encoding="utf-8") as file:
+        with open(filename, "r", encoding="utf-8") as file:
             content = file.read()
             num_questions = content.count("Question:")
 
@@ -133,7 +156,7 @@ def option_selected():
             # Generate another question
             question, options = generate_question(content)
 
-            with open("conversation.txt", "a", encoding="utf-8") as file:
+            with open(filename, "a", encoding="utf-8") as file:
                 file.write("\nQuestion: " + question + "\n")
                 for key, option in options.items():
                     file.write(f"{key}. {option}\n")
@@ -141,19 +164,26 @@ def option_selected():
             # Prepare the response data
             parsed_data = {
                 "question": question,
-                "options": options
+                "options": options,
+                "conversationId": conversation_id
             }
 
             return jsonify(parsed_data), 200
 
         else:
-            # Generate user's purpose based on conversation.txt
+            # Generate user's purpose based on conversation
             user_purpose = generate_user_purpose(content)
 
-            return jsonify({"finalResult": user_purpose}), 200
+            # Save the conversation to AWS S3
+            save_conversation_to_s3(content, conversation_id)
+
+            # Delete the conversation file
+            os.remove(filename)
+
+            return jsonify({"finalResult": user_purpose, "conversationId": conversation_id}), 200
 
     else:
-        return jsonify({"error": "No option provided"}), 400
+        return jsonify({"error": "No option or conversationId provided"}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
