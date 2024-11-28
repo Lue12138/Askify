@@ -1,0 +1,161 @@
+/* App.css */
+
+.app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: Arial, sans-serif;
+    color: #333;
+  }
+  
+  .app-title {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #2c3e50;
+  }
+  
+  .url-form {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+  
+  .url-input {
+    width: 70%;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #bdc3c7;
+    border-radius: 4px 0 0 4px;
+    outline: none;
+  }
+  
+  .url-input:focus {
+    border-color: #3498db;
+  }
+  
+  .next-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #3498db;
+    color: #fff;
+    border: 2px solid #3498db;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+  }
+  
+  .next-button:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+  }
+  
+  .question-container {
+    margin-top: 20px;
+  }
+  
+  .question-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #34495e;
+  }
+  
+  .options-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .option-item {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    background-color: #ecf0f1;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .option-item:hover {
+    background-color: #d0d7de;
+  }
+  
+  .option-item.selected {
+    background-color: #a5d6a7;
+  }
+  
+  .result-container {
+    margin-top: 30px;
+    text-align: center;
+  }
+  
+  .result-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #27ae60;
+  }
+  
+  .result-text {
+    font-size: 18px;
+    margin-bottom: 30px;
+  }
+  
+  .restart-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #e74c3c;
+    color: #fff;
+    border: 2px solid #e74c3c;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .restart-button:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+  }  
+
+.app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: Arial, sans-serif;
+    color: #333;
+  }
+  
+  .app-title {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #2c3e50;
+  }
+  
+  /* ... rest of your existing styles ... */
+  
+  /* Loading animation styles */
+  .loading-animation {
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  .loading-animation p {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #3498db;
+  }
+  
+  .spinner {
+    margin: 0 auto;
+    width: 50px;
+    height: 50px;
+    border: 6px solid #f3f3f3; /* Light grey */
+    border-top: 6px solid #3498db; /* Blue */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Keyframes for the spinner animation */
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
