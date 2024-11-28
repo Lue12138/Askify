@@ -4,34 +4,46 @@ import "./App.css";
 
 function App() {
   const [url, setUrl] = useState("");
-  const [questionData, setQuestionData] = useState(null); // State to store question and options
-  const [selectedOption, setSelectedOption] = useState(null); // State to store the selected option
+  const [questionData, setQuestionData] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [finalResult, setFinalResult] = useState(null);
 
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Prevents the default form submission behavior
+    event.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:8000/classify", {
-        url: url, // Send the URL as JSON
+      const response = await axios.post("http://localhost:8000/scrape", {
+        url: url,
       });
 
       console.log("Response from backend:", response.data);
-      setQuestionData(response.data); // Set the response data to state for display
+      setQuestionData(response.data);
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
   const handleOptionClick = async (option) => {
-    setSelectedOption(option); // Update selected option in state
+    setSelectedOption(option);
     try {
-      // Send the selected option to the backend
-      const response = await axios.post("http://localhost:8000/optionSelected", {
-        selectedOption: option,
-      });
+      const response = await axios.post(
+        "http://localhost:8000/optionSelected",
+        {
+          selectedOption: option,
+        }
+      );
 
       console.log("Option selection response:", response.data);
-      // Optionally, handle the response (e.g., show a confirmation message or further actions)
+
+      if (response.data.finalResult) {
+        // Final result received
+        setFinalResult(response.data.finalResult);
+        setQuestionData(null);
+      } else if (response.data.question && response.data.options) {
+        // Next question received
+        setQuestionData(response.data);
+        setSelectedOption(null);
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -40,27 +52,52 @@ function App() {
   return (
     <div>
       <h1>Welcome to Askify! Enter the URL and click next to get started!</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          name="query"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)} // Update state on input change
-          placeholder="Enter website URL"
-        />
-        <button type="submit">Next</button>
-      </form>
+      {!questionData && !finalResult && (
+        <form onSubmit={handleSubmit}>
+          <input
+            name="query"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Enter website URL"
+          />
+          <button type="submit">Next</button>
+        </form>
+      )}
 
-      {/* Conditionally render question and options if available */}
       {questionData && (
         <div>
           <h2>{questionData.question}</h2>
           <ul>
             {Object.entries(questionData.options).map(([key, option]) => (
-              <li key={key} onClick={() => handleOptionClick(option)} style={{ cursor: "pointer", color: selectedOption === option ? "blue" : "black" }}>
+              <li
+                key={key}
+                onClick={() => handleOptionClick(option)}
+                style={{
+                  cursor: "pointer",
+                  color: selectedOption === option ? "blue" : "black",
+                }}
+              >
                 {key}. {option}
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {finalResult && (
+        <div>
+          <h2>Your Purpose:</h2>
+          <p>{finalResult}</p>
+          <button
+            onClick={() => {
+              setUrl("");
+              setQuestionData(null);
+              setSelectedOption(null);
+              setFinalResult(null);
+            }}
+          >
+            Restart
+          </button>
         </div>
       )}
     </div>
